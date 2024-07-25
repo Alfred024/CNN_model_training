@@ -21,10 +21,35 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
 
 # SPLIT OF DATA
 
-def splitDataset(dataset, trainSize, testingSize):
+def splitDataset(dataset, train_bacthSize, testing_batchSize):
     # 80% training = 52 batches
-  train_dataset = dataset.take(trainSize)
+  train_dataset = dataset.take(train_bacthSize)
     # 10% testing = 7 batches
-  testing_dataset = dataset.skip(trainSize).take(testingSize)
+  testing_dataset = dataset.skip(train_bacthSize).take(testing_batchSize)
     # 10% validation = 6 batches
-  validation_dataset = dataset.skip(trainSize).skip(testingSize)
+  validation_dataset = dataset.skip(train_bacthSize).skip(testing_batchSize)
+
+  return train_dataset, testing_dataset, validation_dataset
+  
+train_dataset, testing_dataset, validation_dataset = splitDataset(dataset, 52, 7)
+
+# PREFETCHING + CACHING IMAGE 
+# (In this case, cache would help storing 
+# image data to do the processing of next epoch faster)
+
+train_dataset = train_dataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
+testing_dataset = testing_dataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
+validation_dataset = validation_dataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
+
+# DATA AUGMENTATION 
+# To make our modelo more robust 
+
+resize_and_rescale = tf.keras.Sequential([
+    layers.experimental.preprocessing.Resizing(IMAGE_SIZE, IMAGE_SIZE),
+    layers.experimental.preprocessing.Rescaling(1.0/255)
+])
+
+data_augmentation = tf.keras.Sequential([
+    layers.experimental.preprocessing.RandomFlip('horizontal_and_vertical'),
+    layers.experimental.preprocessing.RandomRotation(0.2)
+])
