@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 IMAGE_SIZE = 256
 BATCH_SIZE = 32
 EPOCHS = 50
+CHANNELS = 3
 
 dataset = tf.keras.preprocessing.image_dataset_from_directory(
     "Imgs_Folder",
@@ -42,7 +43,7 @@ testing_dataset = testing_dataset.cache().shuffle(1000).prefetch(buffer_size=tf.
 validation_dataset = validation_dataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
 
 # DATA AUGMENTATION 
-# To make our modelo more robust 
+# To make our model more robust 
 
 resize_and_rescale = tf.keras.Sequential([
     layers.experimental.preprocessing.Resizing(IMAGE_SIZE, IMAGE_SIZE),
@@ -53,3 +54,29 @@ data_augmentation = tf.keras.Sequential([
     layers.experimental.preprocessing.RandomFlip('horizontal_and_vertical'),
     layers.experimental.preprocessing.RandomRotation(0.2)
 ])
+
+# MODEL CREATION 
+
+input_shape = (BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNELS)
+n_classes = 3
+
+model = models.Sequential([
+    resize_and_rescale,
+    layers.Conv2D(32, kernel_size = (3,3), activation='relu', input_shape=input_shape),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64,  kernel_size = (3,3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64,  kernel_size = (3,3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(n_classes, activation='softmax'),
+])
+
+model.build(input_shape=input_shape)
